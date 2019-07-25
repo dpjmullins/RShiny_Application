@@ -1,0 +1,188 @@
+---
+title: "Machine Learning Course Project"
+author: "David Mullins"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    fig_caption: true
+    df_print: paged
+---
+
+## Executive Summary
+
+Three different models were fit on this dataset: classification tree, a gradient boosting machine and random forest. The random forest model was found to be best with an estimated out-of-sample accuracy of 99%.
+
+## Problem Description
+
+### Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+### Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment. 
+
+### What you should submit
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+Peer Review Portion
+
+Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
+Course Project Prediction Quiz Portion
+
+Apply your machine learning algorithm to the 20 test cases available in the test data above and submit your predictions in appropriate format to the Course Project Prediction Quiz for automated grading. 
+
+## Data Setup
+
+The datasets were read into R. The datasets have the same number of columns / variables at 160.
+
+```{r load_data}
+training <- read.csv("pml-training.csv", na.strings = c("NA", ""))
+testing <- read.csv("pml-testing.csv", na.strings = c("NA", ""))
+dim(training);dim(testing)
+```
+
+The first columns represent unique the sample number, so this is removed. Columns 2-7 represent data and user information, so this is removed.
+
+```{r}
+## Remove first column is is just sample number
+training <- training[,-c(1:7)]
+testing <- testing[,-c(1:7)]
+```
+
+It appears that in the data, the data is either all present (i.e. not NA) or all NA. The variables with all NAs will be removed. This leaves 52 predictor variables. 
+
+```{r missing_values}
+## Check for missing values
+missing_values <- apply(training, 2, function(x) {sum(is.na(x))} )
+summary(missing_values)
+
+## Remove variables with mostly NAs
+training <- training[,which(missing_values == 0)]
+## Remove the same variables from the testing dataset
+testing <- testing[,which(colnames(testing) %in% colnames(training))]
+dim(training);dim(testing)
+```
+
+## Model Testing
+
+The caret package is loaded and parallel CPUs are registered.
+
+```{r load_caret}
+library(caret)
+library(doParallel)
+cl <- makePSOCKcluster(16)
+registerDoParallel(cl)
+```
+
+Split the training data into a training and test set so that the potential models may be tested.
+
+```{r split_data}
+trainIndex <- createDataPartition(training$classe, p = 0.8, list = F)
+trainSub <- training[trainIndex,]
+testSub <- training[-trainIndex,]
+```
+
+A repeated cross-validation sub-sampling method was used.
+
+```{r initial_model}
+## Specify repeated cross-validation for testing the model
+fitControl <- 
+    trainControl(
+        method = "repeatedcv",
+        number = 5,
+        repeats = 5
+    )
+```
+
+### CART model
+
+A CART model was fit through rpart in caret. It can be seen in the plot that the accuracy decreases as complexity increases. 
+
+```{r rpart_model}
+set.seed(4)
+mod_rpart <-
+    train(
+        classe ~ ., data = trainSub,
+        method = "rpart",
+        trControl = fitControl
+    )
+plot(mod_rpart)
+```
+
+This model has poor accuracy of only 50%. 
+
+```{r rpart_pred}
+pred_rpart <- predict(mod_rpart, newdata = testSub)
+cm_rpart <- confusionMatrix(testSub$classe, pred_rpart)
+cm_rpart[["overall"]]["Accuracy"]
+```
+
+### Gradient boosting machine model
+
+A gradient boosting model was fit. The plot shows that the accuracy increase greatly at a tree depth of 3 and with increasing number of boosting iterations.
+
+```{r gbm_model}
+set.seed(4)
+mod_gbm <- 
+    train(
+        classe ~ ., data = trainSub, 
+        method = "gbm",
+        trControl = fitControl,
+        verbose = F)
+plot(mod_gbm)
+```
+
+This boosting model has a high accuracy of 96%.
+
+```{r gbm_pred}
+pred_gbm <- predict(mod_gbm, newdata = testSub)
+cm_gbm <- confusionMatrix(testSub$classe, pred_gbm)
+cm_gbm[["overall"]]["Accuracy"]
+```
+
+
+### Random Forest
+
+A random forest model was fit. The plot shows that prediction accuracy increases until about 26 predictors. After that accuracy drops off sharply with additional predictors. These additional predictors just add noise. The accuracy also starts off very high with 2 or 3 predictors, only rising modestly from there. This indicates that one or two predictors have high importance in the model. 
+
+```{r rf_model}
+set.seed(4)
+mod_rf <- 
+    train(
+        classe ~ ., data = trainSub,
+        method = "rf",
+        trControl = fitControl,
+        verbose = F)
+plot(mod_rf)
+```
+
+The most important predictor is 'roll\_belt'. 
+
+```{r var_important}
+varImp(mod_rf)
+```
+
+This model has an excellent accuracy of 99%.
+
+```{r rf_pred}
+pred_rf <- predict(mod_rf, newdata = testSub)
+cm_rf <- confusionMatrix(testSub$classe, pred_rf)
+cm_rf[["overall"]]["Accuracy"]
+```
+
+```{r stop_cluster}
+stopCluster(cl)
+```
+
+## Best model
+
+The best model was found to be random forest with an accuracy of 99% on the test subset of the data. The out-of-sample error rate for this is therefore estimated to be < 1%. 
