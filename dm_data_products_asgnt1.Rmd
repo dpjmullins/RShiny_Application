@@ -1,0 +1,27 @@
+---
+title: "Developing Data Products: R Markdown and Leaflet Assignment"
+author: "David Mullins"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    fig_caption: true
+    df_print: paged
+---
+
+```{r}
+library(leaflet)
+library(htmltools)
+
+data1 <- read.csv(textConnection( 
+    "Place,Lat,Long
+    Great fish and chips,51.704865,-8.521897
+    Creamy Guinness,51.706530,-8.523512
+    Few shapes,51.706839,-8.522959"
+    ))
+
+my_map <- data1 %>%
+    leaflet() %>%
+    addTiles() %>%
+    addMarkers(lat=~Lat, lng=~Long, popup = ~htmlEscape(Place))
+my_map
+```
