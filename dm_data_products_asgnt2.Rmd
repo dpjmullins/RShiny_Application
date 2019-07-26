@@ -1,0 +1,38 @@
+---
+title: "Developing Data Products: R Markdown Presentation & Plotly"
+author: "David Mullins"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: ioslides_presentation
+---
+
+## Heading
+
+### Sub-heading
+
+Some text
+
+## Plot Code
+
+```{r}
+library(ggplot2)
+library(plotly)
+
+## Generate data
+x <- rnorm(100, mean = 50, sd = 5)
+y <- rnorm(100, mean = 0, sd = 8) 
+plot.df <- data.frame(x = sort(x), y = sort(y))
+
+## Create plot with ggplot2
+plot1 <-
+    ggplot(data = plot.df, aes(x = x, y = y) ) +
+        geom_point(colour = "navy") +
+        ggtitle("Plot of x versus y") +
+        theme_bw()
+```
+
+## Plot
+
+```{r print_plot}
+plot1
+```
+
