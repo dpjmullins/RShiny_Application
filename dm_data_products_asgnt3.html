@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<title>Coursera - Developing Data Products</title>
+	<meta name="description" content="Coursera - Developing Data Products">
+	<meta name="author" content="David Mullins">
+	<meta name="generator" content="slidify" />
+	
+	<!-- LOAD STYLE SHEETS -->
+	<link rel="stylesheet" href="libraries/frameworks/html5slides/default/styles.css">
+	<link rel="stylesheet" href="libraries/highlighters/prettify/css/tomorrow.css" />  <link rel="stylesheet" href = "assets/css/ribbons.css">
+  
+</head>
+<body style='display: none'>
+	<section class='slides layout-regular template-regular'>
+     <article class="" id="slide-1" style="background:;">
+  <h3>Coursera - Developing Data Products</h3>
+  <h2>Programming Assignment to Create Shiny Application</h2>
+
+<h3><em>David Mullins</em></h3>
+
+<h4>01/08/2019</h4>
+
+</article>
+
+<article class="class" id="id" style="background:;">
+  <h3>Shiny app based on the &#39;Titanic&#39; sample dataset available in base R</h3>
+  <p>This is a simple dataset with 4 &#39;predictor&#39; categorical variables and 1 &#39;response&#39; variable in the frequency of survival.</p>
+
+<pre><code class="r">summary(as.data.frame(Titanic))
+</code></pre>
+
+<pre><code>##   Class       Sex        Age     Survived      Freq       
+##  1st :8   Male  :16   Child:16   No :16   Min.   :  0.00  
+##  2nd :8   Female:16   Adult:16   Yes:16   1st Qu.:  0.75  
+##  3rd :8                                   Median : 13.50  
+##  Crew:8                                   Mean   : 68.78  
+##                                           3rd Qu.: 77.00  
+##                                           Max.   :670.00
+</code></pre>
+
+</article>
+
+<article class="" id="slide-3" style="background:;">
+  <h3>Choose travel class</h3>
+  <p>Radio buttons were decided on as a means of selecting between different travel classes. The shiny code for this is shown.</p>
+
+<pre><code class="r">radioButtons(
+    inputId = &quot;Class&quot;,
+    label = &quot;Pick the class of travel:&quot;,
+    choices = list(
+        `1st` = &quot;1st&quot;,
+        `2nd` = &quot;2nd&quot;,
+        `3rd` = &quot;3rd&quot;,
+        `Crew` = &quot;Crew&quot;
+    )
+)
+</code></pre>
+
+</article>
+
+<article class="" id="slide-4" style="background:;">
+  <h3>The plot was then created with ggplot2</h3>
+  <pre><code class="r">outPlot &lt;-
+    ggplot(data = plot_data.df, aes(x = xaxis, y = chances, label = paste(round(chances*100,1), &quot;%&quot;, sep=&quot; &quot;)) ) +
+        ## Area plot which will be filled under the line
+        geom_area(fill = &quot;skyblue&quot;, colour = &quot;skyblue&quot;) +
+        ## Set up y-axis
+        geom_hline( aes(yintercept = 1), colour = &quot;black&quot; ) +
+        scale_y_continuous(name = &quot;variable&quot;, limits = c(0, 1)) +
+        ## Create facets
+        facet_wrap(~survive) +
+        ## Convert to circular plot
+        coord_polar(theta = &quot;x&quot;) +
+        ## Annotate percentages
+        geom_text(aes(y=0), size = 5) +
+        theme_bw() + theme(
+            panel.grid = element_blank(), panel.border = element_blank(),
+            axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank(),
+            text = element_text(size=20)
+</code></pre>
+
+</article>
+
+<article class="" id="slide-5" style="background:;">
+  <h3>The result!</h3>
+  <p>An interactive app that is available at:</p>
+
+<p><a href="https://dpjmullins.shinyapps.io/shiny_app/">https://dpjmullins.shinyapps.io/shiny_app/</a></p>
+
+</article>
+
+  </section>
+</body>
+  <!-- LOAD JAVASCRIPTS  -->
+	<script src='libraries/frameworks/html5slides/default/slides.js'></script>
+	<!-- Google Prettify -->
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/prettify/188.0.0/prettify.js"></script>
+	<script src='libraries/highlighters/prettify/js/lang-r.js'></script>
+	<script>
+	  var pres = document.getElementsByTagName("pre");
+	  for (var i=0; i < pres.length; ++i) {
+	    pres[i].className = "prettyprint linenums";
+	  }
+	  prettyPrint();
+	</script>
+	<!-- End Google Prettify --> 
+	</html>

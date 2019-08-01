@@ -1,0 +1,81 @@
+---
+title       : Coursera - Developing Data Products
+subtitle    : Programming Assignment to Create Shiny Application
+author      : David Mullins
+job         : 
+framework   : html5slides        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : prettify
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+# Coursera - Developing Data Products
+
+## Programming Assignment to Create Shiny Application
+
+### *David Mullins*
+
+#### 01/08/2019
+
+--- .class #id 
+
+## Shiny app based on the 'Titanic' sample dataset available in base R
+
+This is a simple dataset with 4 'predictor' categorical variables and 1 'response' variable in the frequency of survival.
+
+```{r dataset_head}
+summary(as.data.frame(Titanic))
+```
+
+---
+
+## Choose travel class
+
+Radio buttons were decided on as a means of selecting between different travel classes. The shiny code for this is shown.
+
+```{r radio_buttons, eval=FALSE}
+radioButtons(
+    inputId = "Class",
+    label = "Pick the class of travel:",
+    choices = list(
+        `1st` = "1st",
+        `2nd` = "2nd",
+        `3rd` = "3rd",
+        `Crew` = "Crew"
+    )
+)
+```
+
+---
+
+## The plot was then created with ggplot2
+
+```{r ggplot2, eval=FALSE}
+outPlot <-
+    ggplot(data = plot_data.df, aes(x = xaxis, y = chances, label = paste(round(chances*100,1), "%", sep=" ")) ) +
+        ## Area plot which will be filled under the line
+        geom_area(fill = "skyblue", colour = "skyblue") +
+        ## Set up y-axis
+        geom_hline( aes(yintercept = 1), colour = "black" ) +
+        scale_y_continuous(name = "variable", limits = c(0, 1)) +
+        ## Create facets
+        facet_wrap(~survive) +
+        ## Convert to circular plot
+        coord_polar(theta = "x") +
+        ## Annotate percentages
+        geom_text(aes(y=0), size = 5) +
+        theme_bw() + theme(
+            panel.grid = element_blank(), panel.border = element_blank(),
+            axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank(),
+            text = element_text(size=20)
+```
+
+---
+
+## The result!
+
+An interactive app that is available at:
+
+<https://dpjmullins.shinyapps.io/shiny_app/>
